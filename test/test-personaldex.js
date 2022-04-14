@@ -380,7 +380,66 @@ let mockPool
 	});
 	describe('Test Cancellation on provider order', async () => {
 		it('Execution Cancel Provider Order', async () => {
+			// mint corresponding necessary token
+			await testTheTokenProvider.mint(accountProvider.address, 100000);
+			await testTheTokenTarget.mint(accountTarget.address, 200000);
+			await testTheTokenFee.mint(accountProvider.address, 1000);
+			await testTheTokenFee.connect(accountProvider).approve(mockPool.address, 10000);
+			await testTheTokenProvider.connect(accountProvider).approve(mockPool.address, 100000);
+			await mockPool.connect(deployer).addTokenAddress(testTheTokenFee.address, 10);
+			await mockPool.connect(accountProvider).createPersonalProvider(
+				testTheTokenProvider.address,
+				1000, 
+				testTheTokenTarget.address,
+				2000, 
+				1
+			);
 			
+			const mockPoolBalanceBefore = await testTheTokenProvider.balanceOf(mockPool.address);
+			const providerBalanceBefore = await testTheTokenProvider.balanceOf(accountProvider.address);
+			expect(mockPoolBalanceBefore).to.equal(1000);
+			expect(providerBalanceBefore).to.equal(99000);
+
+			// cancel provider trade
+			await mockPool.connect(accountProvider).cancelProviderTrade(0);
+
+			const mockPoolBalanceAfter = await testTheTokenProvider.balanceOf(mockPool.address);
+			const providerBalanceAfter = await testTheTokenProvider.balanceOf(accountProvider.address);
+			expect(mockPoolBalanceAfter).to.equal(0);
+			expect(providerBalanceAfter).to.equal(100000);
+		});
+
+		it('Execution Cancel Target Order', async () => {
+			// mint corresponding necessary token
+			await testTheTokenProvider.mint(accountProvider.address, 100000);
+			await testTheTokenTarget.mint(accountTarget.address, 200000);
+			await testTheTokenFee.mint(accountProvider.address, 1000);
+			await testTheTokenFee.connect(accountProvider).approve(mockPool.address, 10000);
+			await testTheTokenProvider.connect(accountProvider).approve(mockPool.address, 100000);
+			await mockPool.connect(deployer).addTokenAddress(testTheTokenFee.address, 10);
+			await mockPool.connect(accountProvider).createPersonalProvider(
+				testTheTokenProvider.address,
+				1000, 
+				testTheTokenTarget.address,
+				2000, 
+				1
+			);
+			await testTheTokenTarget.connect(accountTarget).approve(mockPool.address, 100000);
+			await mockPool.connect(accountTarget).fulfillPersonalTradeOrder(accountProvider.address, 0);
+
+			
+			const mockPoolBalanceBefore = await testTheTokenTarget.balanceOf(mockPool.address);
+			const targetBalanceBefore = await testTheTokenTarget.balanceOf(accountTarget.address);
+			expect(mockPoolBalanceBefore).to.equal(2000);
+			expect(targetBalanceBefore).to.equal(198000);
+
+			// cancel order trade by customer
+			await mockPool.connect(accountTarget).cancelOrderTrade(accountProvider.address, 0);
+
+			const mockPoolBalanceAfter = await testTheTokenTarget.balanceOf(mockPool.address);
+			const targetBalanceAfter = await testTheTokenTarget.balanceOf(accountTarget.address);
+			expect(mockPoolBalanceAfter).to.equal(0);
+			expect(targetBalanceAfter).to.equal(200000);
 		});
 	});
 });

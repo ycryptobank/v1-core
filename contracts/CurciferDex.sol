@@ -2,75 +2,16 @@
 
 pragma solidity ^0.8.12;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./utils/SafeERC20.sol";
+import "./utils/Ownable.sol";
+import "./utils/ReentrancyGuard.sol";
 
-/**
- * @dev Contract module that helps prevent reentrant calls to a function.
- *
- * Inheriting from `ReentrancyGuard` will make the {nonReentrant} modifier
- * available, which can be applied to functions to make sure there are no nested
- * (reentrant) calls to them.
- *
- * Note that because there is a single `nonReentrant` guard, functions marked as
- * `nonReentrant` may not call one another. This can be worked around by making
- * those functions `private`, and then adding `external` `nonReentrant` entry
- * points to them.
- *
- * TIP: If you would like to learn more about reentrancy and alternative ways
- * to protect against it, check out our blog post
- * https://blog.openzeppelin.com/reentrancy-after-istanbul/[Reentrancy After Istanbul].
- */
-abstract contract ReentrancyGuard {
-    // Booleans are more expensive than uint256 or any type that takes up a full
-    // word because each write operation emits an extra SLOAD to first read the
-    // slot's contents, replace the bits taken up by the boolean, and then write
-    // back. This is the compiler's defense against contract upgrades and
-    // pointer aliasing, and it cannot be disabled.
-
-    // The values being non-zero value makes deployment a bit more expensive,
-    // but in exchange the refund on every call to nonReentrant will be lower in
-    // amount. Since refunds are capped to a percentage of the total
-    // transaction's gas, it is best to keep them low in cases like this one, to
-    // increase the likelihood of the full refund coming into effect.
-    uint256 private constant _NOT_ENTERED = 1;
-    uint256 private constant _ENTERED = 2;
-
-    uint256 private _status;
-
-    constructor() {
-        _status = _NOT_ENTERED;
-    }
-
-    /**
-     * @dev Prevents a contract from calling itself, directly or indirectly.
-     * Calling a `nonReentrant` function from another `nonReentrant`
-     * function is not supported. It is possible to prevent this from happening
-     * by making the `nonReentrant` function external, and making it call a
-     * `private` function that does the actual work.
-     */
-    modifier nonReentrant() {
-        // On the first call to nonReentrant, _notEntered will be true
-        require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
-
-        // Any calls to nonReentrant after this point will fail
-        _status = _ENTERED;
-
-        _;
-
-        // By storing the original value once again, a refund is triggered (see
-        // https://eips.ethereum.org/EIPS/eip-2200)
-        _status = _NOT_ENTERED;
-    }
-}
-
-contract CurciferDex is ReentrancyGuard {
+contract CurciferDex is ReentrancyGuard, Ownable {
 
     using SafeERC20 for IERC20;
 
     // Official first erc20 for fee, Fans of Million Token by TechLead;
     address private constant MM_TOKEN_CONTRACT = 0x993163CaD35162fB579D7B64e6695cB076EF5064;
-
-    address owner;
 
     // contain active provider data
     mapping(address => ProviderData[]) public activePersonalProviders;
@@ -103,14 +44,9 @@ contract CurciferDex is ReentrancyGuard {
     }
 
     constructor() {
-        owner = msg.sender;
         tokenContracts.push(MM_TOKEN_CONTRACT);
         // 0.01 MM;
         fees.push(10^16);
-    }
-
-    function tranferContractOwnership() public onlyOwner {
-        owner = msg.sender;
     }
 
     function addTokenAddress(address _erc20FeeTokenAddress, uint256 _fee) public onlyOwner {
@@ -135,7 +71,7 @@ contract CurciferDex is ReentrancyGuard {
         require(IERC20(_feeTokenAddress).balanceOf(msg.sender) >= _fee, "Provider fee token Balance not enough");
 
         // pay fee
-        IERC20(_feeTokenAddress).safeTransferFrom(msg.sender, owner, _fee);
+        IERC20(_feeTokenAddress).safeTransferFrom(msg.sender, _owner, _fee);
 
         // put provider token to contract
         IERC20(_providerToken).safeTransferFrom(msg.sender, address(this), _providerTokenValue);
@@ -210,14 +146,12 @@ contract CurciferDex is ReentrancyGuard {
         IERC20(exchangeData.targetToken).safeTransfer(msg.sender, exchangeData.targetTokenValue);
     }
 
-    function removeProviderTrade(uint256 _exchangeIndex) public nonReentrant {
+    function cancelProviderTrade(uint256 _exchangeIndex) public nonReentrant {
         ProviderData[] memory providerExchange = activePersonalProviders[msg.sender];
-        require(providerExchange.length == 0, "Provider address has no data");
+        require(providerExchange.length > 0, "Provider address has no data");
         require(_exchangeIndex < providerExchange.length, "This execution is trying to execute index nothing");
         
         ProviderData memory exchangeData = providerExchange[_exchangeIndex];   
-        require(IERC20(exchangeData.targetToken).allowance(msg.sender, address(this)) >= exchangeData.targetTokenValue, "Target token allowance target not enough");
-        require(IERC20(exchangeData.targetToken).balanceOf(msg.sender) >= exchangeData.targetTokenValue, "Target Token Balance not enough");
         require(exchangeData.orderTaker == address(0x0), "This order is still in progress");
         
         uint256 _activePersonalProviderLength = activePersonalProviders[msg.sender].length;
@@ -241,15 +175,8 @@ contract CurciferDex is ReentrancyGuard {
         return _personalProviders;
     }
 
+    // TODO: Get Exchange Data list with param provider address
     function getMyExchangeData() external view returns (ProviderData[] memory) {
         return activePersonalProviders[msg.sender];
-    }
-
-    modifier onlyOwner() {
-        require(
-            owner == msg.sender,
-            "Only owner is authorized for this option"
-        );
-        _;
     }
 }
