@@ -6,9 +6,9 @@ name: CI
 on:
   # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "main", "releases/**" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main", "releases/**" ]
+    branches: [ "main" ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -22,7 +22,21 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
-      - name: install hardhat
+      - name: clean node
+        run: npm cache clean --force
+
+      - name: install hardhat ether and waffle
+        run: |
+          npm install --save-dev @nomiclabs/hardhat-ethers
+          npm install --save-dev @nomiclabs/hardhat-waffle
+
+      - name: install openzeppelin contract
+        run: npm install @openzeppelin/contracts
+
+      - name: install chai
+        run: npm install chai
+
+      - name: install hardhat default
         run: npm install --save-dev hardhat
 
       # Runs a single command using the runners shell
