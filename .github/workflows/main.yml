@@ -25,10 +25,8 @@ jobs:
       - name: clean node
         run: npm cache clean --force
 
-      - name: install hardhat ether and waffle
-        run: |
-          npm install --save-dev @nomiclabs/hardhat-ethers
-          npm install --save-dev @nomiclabs/hardhat-waffle
+      - name: install ganache
+        run: npm install ganache
 
       - name: install openzeppelin contract
         run: npm install @openzeppelin/contracts
