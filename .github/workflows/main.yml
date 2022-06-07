@@ -23,4 +23,5 @@ jobs:
           npm install ganache
           npm install chai
           npm install hardhat
+          npm install @nomiclabs/hardhat-etherscan
           npx hardhat test
