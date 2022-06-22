@@ -22,6 +22,6 @@ jobs:
           npm cache clean --force
           npm install ganache
           npm install chai
-          npm install hardhat
-          npm install @nomiclabs/hardhat-etherscan
+          npm install --save-dev hardhat
+          npm install --save-dev @nomiclabs/hardhat-etherscan
           npx hardhat test
