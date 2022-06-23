@@ -26,4 +26,5 @@ jobs:
           npm install --save-dev @nomiclabs/hardhat-waffle
           npm install --save-dev @nomiclabs/hardhat-ethers
           npm install --save-dev @nomiclabs/hardhat-etherscan
+          npx hardhat compile
           npx hardhat test
