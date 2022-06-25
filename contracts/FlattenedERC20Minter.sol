@@ -1592,7 +1592,3 @@ contract ERC20PresetMinterPauser is Context, AccessControlEnumerable, ERC20Burna
         super._beforeTokenTransfer(from, to, amount);
     }
 }
-
-
-contract MockPool is ERC20PresetMinterPauser {
-}
