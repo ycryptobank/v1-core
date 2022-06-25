@@ -86,12 +86,7 @@ interface IERC20 {
 }
 
 
-// File @openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol@v4.5.0
 
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/IERC20Metadata.sol)
-
-// pragma solidity ^0.8.12;
 
 /**
  * @dev Interface for the optional metadata functions from the ERC20 standard.
@@ -115,14 +110,6 @@ interface IERC20Metadata is IERC20 {
     function decimals() external view returns (uint8);
 }
 
-
-// File @openzeppelin/contracts/utils/Context.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
-
-// pragma solidity ^0.8.12;
-
 /**
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -142,14 +129,6 @@ abstract contract Context {
         return msg.data;
     }
 }
-
-
-// File @openzeppelin/contracts/token/ERC20/ERC20.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.5.0) (token/ERC20/ERC20.sol)
-
-// pragma solidity ^0.8.12;
 
 
 
@@ -529,14 +508,6 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 }
 
 
-// File @openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.5.0) (token/ERC20/extensions/ERC20Burnable.sol)
-
-// pragma solidity ^0.8.12;
-
-
 /**
  * @dev Extension of {ERC20} that allows token holders to destroy both their own
  * tokens and those that they have an allowance for, in a way that can be
@@ -568,14 +539,6 @@ abstract contract ERC20Burnable is Context, ERC20 {
         _burn(account, amount);
     }
 }
-
-
-// File @openzeppelin/contracts/security/Pausable.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (security/Pausable.sol)
-
-// pragma solidity ^0.8.12;
 
 /**
  * @dev Contract module which allows children to implement an emergency stop
@@ -663,14 +626,6 @@ abstract contract Pausable is Context {
 }
 
 
-// File @openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/ERC20Pausable.sol)
-
-// pragma solidity ^0.8.12;
-
-
 /**
  * @dev ERC20 token with pausable token transfers, minting and burning.
  *
@@ -696,14 +651,6 @@ abstract contract ERC20Pausable is ERC20, Pausable {
         require(!paused(), "ERC20Pausable: token transfer while paused");
     }
 }
-
-
-// File @openzeppelin/contracts/access/IAccessControl.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (access/IAccessControl.sol)
-
-// pragma solidity ^0.8.12;
 
 /**
  * @dev External interface of AccessControl declared to support ERC165 detection.
@@ -789,14 +736,6 @@ interface IAccessControl {
     function renounceRole(bytes32 role, address account) external;
 }
 
-
-// File @openzeppelin/contracts/access/IAccessControlEnumerable.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (access/IAccessControlEnumerable.sol)
-
-// pragma solidity ^0.8.12;
-
 /**
  * @dev External interface of AccessControlEnumerable declared to support ERC165 detection.
  */
@@ -821,14 +760,6 @@ interface IAccessControlEnumerable is IAccessControl {
      */
     function getRoleMemberCount(bytes32 role) external view returns (uint256);
 }
-
-
-// File @openzeppelin/contracts/utils/Strings.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (utils/Strings.sol)
-
-// pragma solidity ^0.8.12;
 
 /**
  * @dev String operations.
@@ -893,14 +824,6 @@ library Strings {
     }
 }
 
-
-// File @openzeppelin/contracts/utils/introspection/IERC165.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (utils/introspection/IERC165.sol)
-
-// pragma solidity ^0.8.12;
-
 /**
  * @dev Interface of the ERC165 standard, as defined in the
  * https://eips.ethereum.org/EIPS/eip-165[EIP].
@@ -922,13 +845,6 @@ interface IERC165 {
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
 }
 
-
-// File @openzeppelin/contracts/utils/introspection/ERC165.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (utils/introspection/ERC165.sol)
-
-// pragma solidity ^0.8.12;
 
 /**
  * @dev Implementation of the {IERC165} interface.
@@ -954,12 +870,6 @@ abstract contract ERC165 is IERC165 {
 }
 
 
-// File @openzeppelin/contracts/access/AccessControl.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.5.0) (access/AccessControl.sol)
-
-// pragma solidity ^0.8.12;
 
 
 
@@ -1179,12 +1089,6 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
 }
 
 
-// File @openzeppelin/contracts/utils/structs/EnumerableSet.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (utils/structs/EnumerableSet.sol)
-
-// pragma solidity ^0.8.12;
 
 /**
  * @dev Library for managing
@@ -1540,12 +1444,6 @@ library EnumerableSet {
 }
 
 
-// File @openzeppelin/contracts/access/AccessControlEnumerable.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.5.0) (access/AccessControlEnumerable.sol)
-
-// pragma solidity ^0.8.12;
 
 
 
@@ -1606,12 +1504,6 @@ abstract contract AccessControlEnumerable is IAccessControlEnumerable, AccessCon
 }
 
 
-// File @openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol@v4.5.0
-
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.5.0) (token/ERC20/presets/ERC20PresetMinterPauser.sol)
-
-// pragma solidity ^0.8.12;
 
 
 
@@ -1701,12 +1593,6 @@ contract ERC20PresetMinterPauser is Context, AccessControlEnumerable, ERC20Burna
     }
 }
 
-
-// File contracts/MockPool.sol
-
-// SPDX-License-Identifier: MIT
-
-// pragma solidity ^0.8.12;
 
 contract MockPool is ERC20PresetMinterPauser {
 }
