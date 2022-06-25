@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.5.0) (token/ERC20/IERC20.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -91,7 +91,7 @@ interface IERC20 {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/IERC20Metadata.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 /**
  * @dev Interface for the optional metadata functions from the ERC20 standard.
@@ -121,7 +121,7 @@ interface IERC20Metadata is IERC20 {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -149,7 +149,7 @@ abstract contract Context {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.5.0) (token/ERC20/ERC20.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 
 
@@ -534,7 +534,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.5.0) (token/ERC20/extensions/ERC20Burnable.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 
 /**
@@ -575,7 +575,7 @@ abstract contract ERC20Burnable is Context, ERC20 {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (security/Pausable.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 /**
  * @dev Contract module which allows children to implement an emergency stop
@@ -668,7 +668,7 @@ abstract contract Pausable is Context {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/ERC20Pausable.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 
 /**
@@ -703,7 +703,7 @@ abstract contract ERC20Pausable is ERC20, Pausable {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (access/IAccessControl.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 /**
  * @dev External interface of AccessControl declared to support ERC165 detection.
@@ -795,7 +795,7 @@ interface IAccessControl {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (access/IAccessControlEnumerable.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 /**
  * @dev External interface of AccessControlEnumerable declared to support ERC165 detection.
@@ -828,7 +828,7 @@ interface IAccessControlEnumerable is IAccessControl {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/Strings.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 /**
  * @dev String operations.
@@ -899,7 +899,7 @@ library Strings {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/introspection/IERC165.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 /**
  * @dev Interface of the ERC165 standard, as defined in the
@@ -928,7 +928,7 @@ interface IERC165 {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/introspection/ERC165.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 /**
  * @dev Implementation of the {IERC165} interface.
@@ -959,7 +959,7 @@ abstract contract ERC165 is IERC165 {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.5.0) (access/AccessControl.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 
 
@@ -1184,7 +1184,7 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/structs/EnumerableSet.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 /**
  * @dev Library for managing
@@ -1545,7 +1545,7 @@ library EnumerableSet {
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.5.0) (access/AccessControlEnumerable.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 
 
@@ -1611,7 +1611,7 @@ abstract contract AccessControlEnumerable is IAccessControlEnumerable, AccessCon
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.5.0) (token/ERC20/presets/ERC20PresetMinterPauser.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.12;
 
 
 
