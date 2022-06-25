@@ -20,11 +20,5 @@ jobs:
       - name: setup and test
         run: |
           npm cache clean --force
-          npm install ganache
-          npm install chai
-          npm install --save-dev hardhat
-          npm install --save-dev @nomiclabs/hardhat-waffle
-          npm install --save-dev @nomiclabs/hardhat-ethers
-          npm install --save-dev @nomiclabs/hardhat-etherscan
-          npx hardhat compile
+          npm install
           npx hardhat test
