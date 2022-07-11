@@ -1,26 +1,24 @@
+
+
 # Personal Dex 
+[![Test Contract](https://github.com/curcifer/v1-personaldex/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/curcifer/v1-personaldex/actions/workflows/main.yml)
 
-This is a personal dex create for p2p without 3rd party.
-The Contract act as a middleman of the transaction.
+This is a personal dex create for p2p.
+The Contract act as a middleman of the transaction over blockchain.
 
 
-For Hardjat test
+To run the project make sure you install nodejs
 
 ```shell
+npm install
 npx hardhat test
 ```
 
 # Road Map development
 - [x] Contract Implementation
 - [ ] Testing Contract
-- [ ] Interfacing
-- [ ] Testing Fraud
 - [ ] Audit
-- [ ] Web 
-- [ ] iOS 
-- [ ] Android 
 
-## Notes
-This is still in testing.
-Do not use for real implementation, 
-The repository only for tracking the development and to see if any malicious code inside.
+
+## Disclaimer
+The repository is only for transparency in smart contract.
