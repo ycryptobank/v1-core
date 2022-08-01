@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.12;
 
-import "./utils/Ownable.sol";
 import "./utils/ReentrancyGuard.sol";
 import "./utils/SafeERC20.sol";
 
@@ -31,12 +30,14 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		bool isReady;
 	}
 
-	OrderInfo[] private providerOrders;
+	OrderInfo[] private orderBook;
 
 	address private assetOwner;
+	address private orderListContract;
 
-	constructor(address _owner) {
+	constructor(address _owner, address _orderListContract) {
 		assetOwner = _owner;
+		orderListContract = _orderListContract;
 	}
 
 	function addOrder(
@@ -56,15 +57,30 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		orderInfo.desiredTokenQuantity = _desiredTokenQuantity;
 		orderInfo.desiredTokenRemainingQuantity = _desiredTokenRemainingQuantity;
 
-		providerOrders.push(orderInfo);
+		orderBook.push(orderInfo);
+	}
+
+	function getOrderBooks(uint _page, uint _limitSize) external view returns (OrderInfo[] memory) {
+		require(_page > 0, "page start from 0");
+		require(_limitSize <= 10, "size limit is 10");
+		uint cursor = (_page - 1) * _limitSize;
+		OrderInfo[] memory _orderBook = new OrderInfo[](_limitSize);
+		for (uint i = cursor; i < (_page * _limitSize - 1); i++) {
+			_orderBook[i % _limitSize] = orderBook[i];
+		}
+		return _orderBook;
 	}
 
 	modifier onlyOwner() {
-        require(owner() == msg.sender, "Ownable: caller is not the owner");
+        require((owner() == msg.sender) || ( mainOwner() == msg.sender), "Ownable: caller is not the owner");
         _;
     }
 	
 	function owner() public view virtual returns (address) {
         return assetOwner;
+    }
+
+	function mainOwner() public view virtual returns (address) {
+        return orderListContract;
     }
 }
