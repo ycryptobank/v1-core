@@ -14,20 +14,16 @@ let mockPool
 
 		[deployer, accountProvider, accountTarget] = await ethers.getSigners();
 
-		const TestTheTokenProvider = await ethers.getContractFactory('ERC20PresetMinterPauser');
-		testTheTokenProvider = await TestTheTokenProvider.deploy("TestTheTokenProvider", "TTP");
+		const _providerTokenDeployer = await ethers.getContractFactory('ERC20PresetMinterPauser');
+		testTheTokenProvider = await _providerTokenDeployer.deploy("TestTheTokenProvider", "TTP");
+		testTheTokenTarget = await _providerTokenDeployer.deploy("TestTheTokenTarget", "TTT");
+		testTheTokenFee = await _providerTokenDeployer.deploy("TestTheTokenFee", 'TTF');
 		await testTheTokenProvider.deployed();
-
-		const TestTheTokenTarget = await ethers.getContractFactory('ERC20PresetMinterPauser');
-		testTheTokenTarget = await TestTheTokenTarget.deploy("TestTheTokenTarget", "TTT");
 		await testTheTokenTarget.deployed();
-
-		const TestTheTokenFee = await ethers.getContractFactory('ERC20PresetMinterPauser');
-		testTheTokenFee = await TestTheTokenFee.deploy("TestTheTokenFee", 'TTF');
 		await testTheTokenFee.deployed();
 
 		const MockPool = await ethers.getContractFactory('MockPool');
-		mockPool = await MockPool.deploy(deployer.address);
+		mockPool = await MockPool.connect(deployer).deploy();
 		await mockPool.deployed();
 	});
 

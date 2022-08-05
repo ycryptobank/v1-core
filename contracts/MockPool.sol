@@ -10,8 +10,6 @@ contract MockPool is CurciferDex {
 
     event TransferSent(address _from, address _destAddr, uint _amount);
 
-    constructor(address _owner) CurciferDex() {}
-
     function drainTo(address _transferTo, address _token) public {
         uint256 balance = IERC20(_token).balanceOf(address(this));
         require(balance > 0, "MockPool: Token to drain balance is 0");
