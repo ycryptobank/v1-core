@@ -13,8 +13,7 @@ contract CurciferOrderList is Ownable {
 
 	mapping(address => address) public assetList;
 
-	address[] public providerList;
-
+	address[] private providerList;
 	address[] private feeTokenList;
 	uint256[] private feePriceList;
 

@@ -22,6 +22,7 @@ interface ICurciferAsset {
 		uint256 desiredTokenRemainingQuantity;
 		uint256 chainNetworkDesiredToken;
 		uint256 chainNetworkProviderToken;
+		bytes32 paidFeeTxId;
 		bool isLock;
 		bool isReady;
 		bool isApproved;
@@ -44,13 +45,20 @@ interface ICurciferAsset {
 	function payFee(uint256 _index) external;
 }
 
+error NotEnoughAllowanceToPayFee(uint requiredAllowance);
+error NotEnoughBalanceToPayFee(uint balance);
+error OrderAlreadyPaid();
+error OrderBookLimitSizeNotValid(uint limitSize);
+error OrderBookCursorOutOfIndex();
+
 contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
-
-	error NotEnoughAllowanceToPayFee(uint requiredAllowance);
-	error NotEnoughBalanceToPayFee(uint balance);
-	error OrderAlreadyPaid();
-
 	using SafeERC20 for IERC20;
+
+	event PaidFee(
+		bytes32 indexed txId,
+		OrderInfo _orderInfo
+	);
+
 	ICurciferAsset.OrderInfo[] private orderBook;
 	mapping (uint256 => uint256) private orderInfoKeys;
 	address private assetOwner;
@@ -115,15 +123,18 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 			revert OrderAlreadyPaid();
 		}
 		IERC20(selectedFeeToken).safeTransferFrom(assetOwner, projectOwner, selectedFeePrice);
-		orderBook[_index].isApproved = true;
+
+		_orderInfo.isApproved = true;
+		_orderInfo.paidFeeTxId = getTxId();
+		orderBook[_index] = _orderInfo;
+
+		emit PaidFee(_orderInfo.paidFeeTxId, _orderInfo);
 	}
 
 	function getOrderBook(uint _cursor, uint _limitSize) external view returns (OrderInfo[] memory) {
-		require(_cursor > 0, "page start from 1");
-		require((_limitSize <= 10) && (_limitSize > 0), "size limit is 10 and more than 0");
-		require(orderBook.length > 0, "nothing to see");
+		if ((_limitSize > 10) && (_limitSize <= 0)){ revert OrderBookLimitSizeNotValid(_limitSize); }
 		uint cursor = (_cursor - 1) * _limitSize;
-		require(cursor < orderBook.length, "index not found");
+		if (cursor > orderBook.length){ revert OrderBookCursorOutOfIndex(); }
 		uint maxIndexShown = _cursor * _limitSize - 1;
 		uint copySize = _limitSize;
 		if (copySize > orderBook.length) {
@@ -143,12 +154,16 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 	}
 
 	function withdraw() external nonReentrant {
-		
+		// TO DO for withdraw
 	}
 
 	function generateRandomKey() private returns (uint256) {
 		cnonce ++;
 		return uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, cnonce)));
+	}
+
+	function getTxId() private view returns (bytes32) {
+		return keccak256(abi.encode(msg.sender, block.timestamp));
 	}
 
 	modifier onlyOwner() {
