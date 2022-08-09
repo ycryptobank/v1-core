@@ -39,10 +39,12 @@ interface ICurciferAsset {
 		address _feeToken,
 		uint256 _feePrice
 	) external;
-	function deposit() external;
+	function deposit(uint idx) external;
+	function customerDeposit() external;
 	function withdraw() external;
-	function getOrderBook(uint256 _page, uint256 _limitSize) external view returns (OrderInfo[] memory);
-	function payFee(uint256 _index) external;
+	function customerWithdraw() external;
+	function getOrderBook(uint256 page, uint256 limitSize) external view returns (OrderInfo[] memory);
+	function payFee(uint256 index) external;
 }
 
 error NotEnoughAllowanceToPayFee(uint requiredAllowance);
@@ -50,6 +52,8 @@ error NotEnoughBalanceToPayFee(uint balance);
 error OrderAlreadyPaid();
 error OrderBookLimitSizeNotValid(uint limitSize);
 error OrderBookCursorOutOfIndex();
+error NotYetPaidFee();
+error NotLockedYet();
 
 contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 	using SafeERC20 for IERC20;
@@ -149,12 +153,26 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		return _orderBook;
 	}
 
-	function deposit() external {
-		// TO DO for deposit
+	function deposit(uint idx) external onlyAssetOwner {
+		OrderInfo memory _orderInfo = orderBook[idx];
+		if (!_orderInfo.isApproved) {
+			revert NotYetPaidFee();
+		}
+		// TO DO: deposit for provider
+		_orderInfo.isReady = true;
+		orderBook[idx] = _orderInfo;
 	}
 
-	function withdraw() external nonReentrant {
-		// TO DO for withdraw
+	function customerDeposit() external {
+		// TO DO: deposit for customer
+	}
+
+	function withdraw() external nonReentrant onlyAssetOwner {
+		// TO DO: for withdraw asset owner
+	}
+
+	function customerWithdraw() external {
+		// TO DO: for withdraw customer
 	}
 
 	function generateRandomKey() private returns (uint256) {
@@ -170,12 +188,17 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
         require((owner() == msg.sender) || ( mainOwner() == msg.sender), "Ownable: caller is not the owner");
         _;
     }
+
+	modifier onlyAssetOwner() {
+		require((owner() == msg.sender));
+		_;
+	}
 	
-	function owner() public view virtual returns (address) {
+	function owner() private view returns (address) {
         return assetOwner;
     }
 
-	function mainOwner() public view virtual returns (address) {
+	function mainOwner() private view returns (address) {
         return orderListContract;
     }
 }

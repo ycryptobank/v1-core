@@ -55,6 +55,10 @@ contract CurciferOrderList is Ownable {
 			);
 	}
 
+	function createNewAsset() external {
+		// TO DO: for create new asset without Order;
+	}
+
 	function getCountProviderList() external view returns (uint) {
 		return providerList.length;
 	}

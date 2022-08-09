@@ -65,6 +65,17 @@ describe("Test Curcifer Order", () => {
 			
 			var _orderBookFlag = await providerAsset.connect(providerAddr).getOrderBook(1, 10);
 			expect(_orderBookFlag.length).to.equal(2);
+
+			await providerAsset.connect(providerAddr).addOrder(tokenA.address, tokenC.address, 100, 100, 10 , 10, 0, 0, tokenE.address, 1);
+			_orderBookFlag = await providerAsset.connect(providerAddr).getOrderBook(1, 10);
+			expect(_orderBookFlag.length).to.equal(3);
+		})
+
+		it("Deposit Provider will deposit correctly", async () => {
+			// TO DO: parameter deposit will change in future
+			await expect(providerAsset.connect(providerAddr).deposit(0)).to.be.revertedWith('NotYetPaidFee');
+
+			await providerAsset.connect(providerAddr).addOrder(tokenD.address, tokenC.address, 100, 100, 10 , 10, 0, 0, tokenE.address, 1);
 		})
 	})
 })
