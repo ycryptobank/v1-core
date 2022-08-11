@@ -10,8 +10,7 @@ contract CurciferDex is ReentrancyGuard, Ownable {
 
     using SafeERC20 for IERC20;
 
-    // Official first erc20 for fee, Fans of Million Token by TechLead;
-    address private constant MM_TOKEN_CONTRACT = 0x993163CaD35162fB579D7B64e6695cB076EF5064;
+    address private constant USDC_TOKEN_CONTRACT = 0x993163CaD35162fB579D7B64e6695cB076EF5064;
 
     // contain active provider data
     mapping(address => ProviderData[]) public activePersonalProviders;
@@ -44,9 +43,8 @@ contract CurciferDex is ReentrancyGuard, Ownable {
     }
 
     constructor() {
-        tokenContracts.push(MM_TOKEN_CONTRACT);
-        // 0.01 MM;
-        fees.push(10^16);
+        tokenContracts.push(USDC_TOKEN_CONTRACT);
+        fees.push(10^18); //1 usdc
     }
 
     function addTokenAddress(address _erc20FeeTokenAddress, uint256 _fee) public onlyOwner {
