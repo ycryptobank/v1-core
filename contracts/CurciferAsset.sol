@@ -89,7 +89,7 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		uint256 _chainNetworkProviderToken,
 		address _feeToken,
 		uint256 _feePrice
-		) external onlyOwner
+		) external onlyForMainContract
 	{
 
 		OrderInfo memory orderInfo;
@@ -184,13 +184,13 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		return keccak256(abi.encode(msg.sender, block.timestamp));
 	}
 
-	modifier onlyOwner() {
-        require((owner() == msg.sender) || ( mainOwner() == msg.sender), "Ownable: caller is not the owner");
+	modifier onlyForMainContract() {
+        require(( mainOwner() == msg.sender), "Ownable: caller is not the contract");
         _;
     }
 
 	modifier onlyAssetOwner() {
-		require((owner() == msg.sender));
+		require((owner() == msg.sender), "Ownable: Caller is not the assetOwner");
 		_;
 	}
 	
