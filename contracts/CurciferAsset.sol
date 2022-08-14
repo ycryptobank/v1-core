@@ -5,13 +5,17 @@ pragma solidity ^0.8.12;
 import "./utils/ReentrancyGuard.sol";
 import "./utils/SafeERC20.sol";
 
+error NotEnoughAllowanceToPayFee(uint requiredAllowance);
+error NotEnoughBalanceToPayFee(uint balance);
+error OrderAlreadyPaid();
+error OrderBookLimitSizeNotValid(uint limitSize);
+error OrderBookCursorOutOfIndex();
+error NotYetPaidFee();
+error NotLockedYet();
+
 interface ICurciferAsset {
-	struct BuyerInfo {
-		uint256 newkey;
-		uint256 oldkey;
-		uint256 providerTokenRemainingQuantity;
-		uint256 desiredTokenRemainingQuantity;
-	}
+	error NotEnoughAllowanceProviderToken(uint requiredAllowance);
+	error NotEnoughBalanceProviderToken(uint balance);
 	struct OrderInfo {
 		address providerTokenAddress;
 		address desiredTokenAddress;
@@ -22,8 +26,8 @@ interface ICurciferAsset {
 		uint256 desiredTokenRemainingQuantity;
 		uint256 chainNetworkDesiredToken;
 		uint256 chainNetworkProviderToken;
+		// maybe no need this property of paidFeeTxId
 		bytes32 paidFeeTxId;
-		bool isLock;
 		bool isReady;
 		bool isApproved;
 	}
@@ -42,18 +46,11 @@ interface ICurciferAsset {
 	function deposit(uint idx) external;
 	function customerDeposit() external;
 	function withdraw() external;
-	function customerWithdraw() external;
+	function customerWithdraw(uint idx, uint soldQuantity, uint receivedQuantity) external;
 	function getOrderBook(uint256 page, uint256 limitSize) external view returns (OrderInfo[] memory);
 	function payFee(uint256 index) external;
+	function getAssetOwner() external view returns (address);
 }
-
-error NotEnoughAllowanceToPayFee(uint requiredAllowance);
-error NotEnoughBalanceToPayFee(uint balance);
-error OrderAlreadyPaid();
-error OrderBookLimitSizeNotValid(uint limitSize);
-error OrderBookCursorOutOfIndex();
-error NotYetPaidFee();
-error NotLockedYet();
 
 contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 	using SafeERC20 for IERC20;
@@ -102,7 +99,6 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		orderInfo.chainNetworkDesiredToken = _chainNetworkDesiredToken;
 		orderInfo.chainNetworkProviderToken = _chainNetworkProviderToken;
 		orderInfo.orderId = orderBook.length;
-		orderInfo.isLock = false;
 		orderInfo.isReady = false;
 		orderInfo.isApproved = false;
 
@@ -158,7 +154,15 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		if (!_orderInfo.isApproved) {
 			revert NotYetPaidFee();
 		}
-		// TO DO: deposit for provider
+		uint allowance = IERC20(_orderInfo.providerTokenAddress).allowance(msg.sender, address(this));
+		uint balance = IERC20(_orderInfo.providerTokenAddress).balanceOf(msg.sender);
+		if (allowance <= _orderInfo.providerTokenQuantity) {
+			revert NotEnoughAllowanceProviderToken(allowance);
+		}
+		if (balance <= _orderInfo.providerTokenQuantity) {
+			revert NotEnoughBalanceProviderToken(balance);
+		}
+		IERC20(_orderInfo.providerTokenAddress).safeTransferFrom(msg.sender, address(this), balance);
 		_orderInfo.isReady = true;
 		orderBook[idx] = _orderInfo;
 	}
@@ -171,8 +175,17 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		// TO DO: for withdraw asset owner
 	}
 
-	function customerWithdraw() external {
-		// TO DO: for withdraw customer
+	function customerWithdraw(uint idx, uint soldQuantity, uint receivedQuantity) external nonReentrant onlyForMainContract {
+		// issue: how to know other chain already deposited
+		// fix: by using server side owner account to approve finalization.
+		OrderInfo memory _orderInfo = orderBook[idx];
+		_orderInfo.providerTokenRemainingQuantity = _orderInfo.providerTokenRemainingQuantity - soldQuantity;
+		_orderInfo.desiredTokenRemainingQuantity = _orderInfo.desiredTokenRemainingQuantity + receivedQuantity;
+		// TO DO : safe transfer token from this contract to customer address
+	}
+
+	function customerWithdrawOnChain() external nonReentrant {
+		// TO DO: for withdraw customer with same chain network
 	}
 
 	function generateRandomKey() private returns (uint256) {
@@ -182,6 +195,10 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 
 	function getTxId() private view returns (bytes32) {
 		return keccak256(abi.encode(msg.sender, block.timestamp));
+	}
+
+	function getAssetOwner() external view returns (address) {
+		return assetOwner;
 	}
 
 	modifier onlyForMainContract() {

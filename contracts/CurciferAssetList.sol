@@ -7,11 +7,22 @@ import "./CurciferAsset.sol";
 import "./utils/SafeERC20.sol";
 import "./utils/Ownable.sol";
 
-contract CurciferOrderList is Ownable {
+error UnknownAssetOwner();
 
+contract CurciferAssetList is Ownable {
 	using SafeERC20 for IERC20;
 
+	event AssetOwnerError(
+		uint errorStatus
+	);
+
+	struct BuyerInfo {
+		uint selectedOrderIndex;
+		bool isOnGoing;
+	}
+
 	mapping(address => address) public assetList;
+	mapping(address => BuyerInfo) public buyerList;
 
 	address[] private providerList;
 	address[] private feeTokenList;
@@ -55,9 +66,35 @@ contract CurciferOrderList is Ownable {
 			);
 	}
 
-	function createNewAsset() external {
-		// TO DO: for create new asset without Order;
+	function createNewAsset() public {
+		address selectedAsset = assetList[msg.sender];
+		if (selectedAsset == address(0)) {
+			address _selectedAsset = address(new CurciferAsset(msg.sender, address(this), _owner));
+			assetList[msg.sender] = _selectedAsset;
+			providerList.push(msg.sender);
+		}
 	}
+
+	function startMyTrade(uint _index) external {
+		require((buyerList[msg.sender].isOnGoing == false), "Trade already initiated");
+		buyerList[msg.sender].selectedOrderIndex = _index;
+		buyerList[msg.sender].isOnGoing = true;
+	}
+
+	function cancelMyTrade() external {
+		buyerList[msg.sender].isOnGoing = false;
+	}
+
+	// TO DO: To be tested
+	function finalizedTrade(address _assetOwner, uint _index, uint soldQuantity, uint receivedQuantity) external onlyOwner {
+		require((buyerList[msg.sender].isOnGoing == true), "Trade not initiated");
+		address selectedAsset = assetList[_assetOwner];
+		if (selectedAsset == address(0)) {
+			emit AssetOwnerError(1);
+			revert UnknownAssetOwner();
+		}
+		ICurciferAsset(selectedAsset).customerWithdraw(_index, soldQuantity, receivedQuantity);
+	} 
 
 	function getCountProviderList() external view returns (uint) {
 		return providerList.length;
