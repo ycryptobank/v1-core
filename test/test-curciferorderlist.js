@@ -59,24 +59,4 @@ describe("Test Curcifer Order", () => {
 			expect(_countOrderList).to.equal(1);
 		})
 	})
-
-	describe("Test Initiate Trade", async () => {
-		it("Customer inititated trade should return the flag true", async () => {
-			var _isOnGoingFlag = await providerOrderList.buyerList(customerAddr.address);
-			expect(_isOnGoingFlag.isOnGoing).to.equal(false);
-			await providerOrderList.connect(customerAddr).startMyTrade(0);
-			_isOnGoingFlag = await providerOrderList.buyerList(customerAddr.address);
-			expect(_isOnGoingFlag.isOnGoing).to.equal(true);
-
-			await expect(providerOrderList.connect(customerAddr).startMyTrade(0)).to.be.reverted;
-		})
-		it("Customer cancel trade", async () => {
-			await expect(providerOrderList.connect(customerAddr).startMyTrade(0)).to.be.not.reverted;
-			var _isOnGoingFlag = await providerOrderList.buyerList(customerAddr.address);
-			expect(_isOnGoingFlag.isOnGoing).to.equal(true);
-			await expect(providerOrderList.connect(customerAddr).cancelMyTrade()).to.be.not.reverted;
-			_isOnGoingFlag = await providerOrderList.buyerList(customerAddr.address);
-			expect(_isOnGoingFlag.isOnGoing).to.equal(false);
-		})
-	}) 
 })

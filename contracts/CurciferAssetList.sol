@@ -16,17 +16,13 @@ contract CurciferAssetList is Ownable {
 		uint errorStatus
 	);
 
-	struct BuyerInfo {
-		uint selectedOrderIndex;
-		bool isOnGoing;
-	}
-
 	mapping(address => address) public assetList;
-	mapping(address => BuyerInfo) public buyerList;
 
 	address[] private providerList;
 	address[] private feeTokenList;
 	uint256[] private feePriceList;
+	uint256 private nonce;
+	uint256 private contractFee = 0.01 ether;
 
 	function createNewOrder(
 		address _providerTokenAddress, 
@@ -61,6 +57,7 @@ contract CurciferAssetList is Ownable {
 			_desiredTokenRemainingQuantity,
 			_chainNetworkDesiredToken,
 			_chainNetworkProviderToken,
+			createOrderId(),
 			_feeToken,
 			_feePrice
 			);
@@ -75,26 +72,14 @@ contract CurciferAssetList is Ownable {
 		}
 	}
 
-	function startMyTrade(uint _index) external {
-		require((buyerList[msg.sender].isOnGoing == false), "Trade already initiated");
-		buyerList[msg.sender].selectedOrderIndex = _index;
-		buyerList[msg.sender].isOnGoing = true;
-	}
-
-	function cancelMyTrade() external {
-		buyerList[msg.sender].isOnGoing = false;
-	}
-
-	// TO DO: To be tested
-	function finalizedTrade(address _assetOwner, uint _index, uint soldQuantity, uint receivedQuantity) external onlyOwner {
-		require((buyerList[msg.sender].isOnGoing == true), "Trade not initiated");
+	function customerTrading(address _assetOwner, uint _orderId, uint _soldQuantity, uint _receivedQuantity) public {
 		address selectedAsset = assetList[_assetOwner];
 		if (selectedAsset == address(0)) {
 			emit AssetOwnerError(1);
 			revert UnknownAssetOwner();
 		}
-		ICurciferAsset(selectedAsset).customerWithdraw(_index, soldQuantity, receivedQuantity);
-	} 
+		ICurciferAsset(selectedAsset).customerTrading(_orderId, _soldQuantity, _receivedQuantity, contractFee, msg.sender);
+	}
 
 	function getCountProviderList() external view returns (uint) {
 		return providerList.length;
@@ -103,5 +88,14 @@ contract CurciferAssetList is Ownable {
 	function addFeeList(address _token, uint256 _fees) external onlyOwner {
 		feeTokenList.push(_token);
 		feePriceList.push(_fees);
+	}
+
+	function updateContractFee(uint256 _fee) external onlyOwner{
+		contractFee = _fee;
+	}
+
+	function createOrderId() private returns (uint256) {
+		nonce ++;
+		return uint256(keccak256(abi.encode(msg.sender, block.timestamp, nonce)));
 	}
 }
