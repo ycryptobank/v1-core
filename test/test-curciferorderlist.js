@@ -5,6 +5,7 @@ describe("Test Curcifer Order", () => {
 	let deployer
 	let providerAddr
 	let providerAddrBeta
+	let customerAddr
 	let tokenA
 	let tokenB
 	let tokenC
@@ -14,7 +15,7 @@ describe("Test Curcifer Order", () => {
 	let providerOrderList
 
 	beforeEach(async () => {
-		[deployer, providerAddr, providerAddrBeta] = await ethers.getSigners();
+		[deployer, providerAddr, providerAddrBeta, customerAddr] = await ethers.getSigners();
 		const _providerToken = await ethers.getContractFactory('ERC20PresetMinterPauser');
 		tokenA = await _providerToken.deploy("TokenA", "TA");
 		tokenB = await _providerToken.deploy("TokenB", "TB");
@@ -29,7 +30,7 @@ describe("Test Curcifer Order", () => {
 		await tokenE.deployed();
 		await tokenFee.deployed();
 
-		const _providerOrderList = await ethers.getContractFactory('CurciferOrderList');
+		const _providerOrderList = await ethers.getContractFactory('CurciferAssetList');
 		providerOrderList = await _providerOrderList.connect(deployer).deploy();
 		await providerOrderList.deployed();
 		
