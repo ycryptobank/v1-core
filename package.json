@@ -17,5 +17,8 @@
     "@openzeppelin/test-helpers": "^0.5.15",
     "chai": "^4.3.6",
     "hardhat": "^2.8.4"
+  },
+  "dependencies": {
+    "@ethersproject/providers": "^5.7.1"
   }
 }
