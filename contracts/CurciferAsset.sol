@@ -150,6 +150,7 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		emit PaidSubcription(expiredSubscription);
 	}
 
+	// when ZeroFee is not available, need to pay Fee when trading
 	function payFee(uint256 _orderId) external nonReentrant {
 		uint allowance = IERC20(selectedFeeToken).allowance(assetOwner, address(this));
 		uint balance = IERC20(selectedFeeToken).balanceOf(assetOwner);

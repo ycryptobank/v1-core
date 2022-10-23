@@ -6,6 +6,7 @@ pragma solidity ^0.8.12;
 import "./CurciferAsset.sol";
 import "./utils/SafeERC20.sol";
 import "./utils/Ownable.sol";
+import "./YCBTradeList.sol";
 
 error UnknownAssetOwner();
 error expiredOrNoSubscription();
@@ -13,7 +14,7 @@ error noSubscriptionExpired();
 error NotEnoughAllowanceToPaySubcriptionFee(uint requiredAllowance);
 error NotEnoughBalanceToPaySubscriptionFee(uint balance);
 
-contract CurciferAssetList is Ownable {
+contract YCBPairListContent is Ownable, YCBPairListContentInterface {
 	using SafeERC20 for IERC20;
 
 	event AssetOwnerError(
@@ -38,6 +39,18 @@ contract CurciferAssetList is Ownable {
 	uint256[] private feePriceList;
 	uint256 private nonce;
 	uint256 private contractFee = 0.01 ether;
+
+	TradePair contentIdentity;
+
+	constructor(string memory _pairName, address _pairA, address _pairB) {
+		contentIdentity.pairName = _pairName;
+		contentIdentity.exchangePairToken = _pairA;
+		contentIdentity.targetPairToken = _pairB;
+	}
+
+    function getPairName() external view returns (string memory) {
+		return contentIdentity.pairName;
+	}
 
 	function createNewOrder(
 		address _providerTokenAddress, 
