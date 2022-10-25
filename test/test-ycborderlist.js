@@ -30,20 +30,30 @@ describe("Test Curcifer Order", () => {
 		await tokenE.deployed();
 		await tokenFee.deployed();
 
-		const _providerOrderList = await ethers.getContractFactory('CurciferAssetList');
-		providerOrderList = await _providerOrderList.connect(deployer).deploy();
+		const _providerOrderList = await ethers.getContractFactory('YCBPairListContent');
+		providerOrderList = await _providerOrderList.connect(deployer).deploy("hello", tokenA.address, tokenB.address, deployer.address);
 		await providerOrderList.deployed();
 		
 		await providerOrderList.connect(deployer).addFeeList(tokenFee.address, 1);
+
+		await tokenFee.connect(providerAddr).approve(providerOrderList.address, 200);
+		await tokenFee.connect(deployer).mint(providerAddr.address, 200);
+		await providerOrderList.connect(providerAddr).paySubsription(1, 0);
 	})
 
 	describe("Test New Order Creation", async () => {
 		it("create new order with new account will create new orderlist", async () => {
+
 			const _countOrderListBefore = await providerOrderList.getCountProviderList();
 			await providerOrderList.connect(providerAddr).createNewOrder(tokenA.address, tokenB.address, 10, 10, 100, 100, 0, 0, 0);
 			const _countOrderListAfter = await providerOrderList.getCountProviderList();
 			expect(_countOrderListAfter).to.equal(1);
 			expect(_countOrderListBefore).to.equal(0);
+			await expect(providerOrderList.connect(providerAddrBeta).createNewOrder(tokenC.address, tokenA.address, 100, 100, 10 , 10, 0, 0, 0))
+			.to.be.revertedWith('expiredOrNoSubscription');
+			await tokenFee.connect(providerAddrBeta).approve(providerOrderList.address, 200);
+			await tokenFee.connect(deployer).mint(providerAddrBeta.address, 200);
+			await providerOrderList.connect(providerAddrBeta).paySubsription(1, 0);
 			await providerOrderList.connect(providerAddrBeta).createNewOrder(tokenC.address, tokenA.address, 100, 100, 10 , 10, 0, 0, 0);
 			const _countOrderListAfterMultiplied = await providerOrderList.getCountProviderList();
 			expect(_countOrderListAfterMultiplied).to.equal(2);

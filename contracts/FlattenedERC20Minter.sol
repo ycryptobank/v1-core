@@ -1592,3 +1592,7 @@ contract ERC20PresetMinterPauser is Context, AccessControlEnumerable, ERC20Burna
         super._beforeTokenTransfer(from, to, amount);
     }
 }
+
+contract CTT is ERC20PresetMinterPauser {
+	constructor() ERC20PresetMinterPauser("Curcifer Test Token", "CTT") {}
+}

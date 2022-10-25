@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.12;
 
-import "./utils/ReentrancyGuard.sol";
 import "./utils/SafeERC20.sol";
+import "./utils/ReentrancyGuard.sol";
 
 error NotEnoughAllowanceToPayFee(uint requiredAllowance);
 error NotEnoughBalanceToPayFee(uint balance);
@@ -17,8 +17,9 @@ error NotLockedYet();
 error withdrawnFlagAlreadyTrue();
 error withdrawnAssetAlreadySent();
 error assetNotReadyToBeWithdrawn();
+error onlyForSameChainWithdraw();
 
-interface ICurciferAsset {
+interface IYCBAsset {
 	error NotEnoughAllowanceDesiredToken(uint requiredAllowance);
 	error NotEnoughAllowanceProviderToken(uint requiredAllowance);
 	error NotEnoughBalanceProviderToken(uint balance);
@@ -59,7 +60,7 @@ interface ICurciferAsset {
 	function customerTrading(uint _orderId, uint _soldQuantity, uint _receivedQuantity, uint _contractFee, address _customerAddress) external payable;
 }
 
-contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
+contract YCBAsset is ReentrancyGuard, IYCBAsset {
 	using SafeERC20 for IERC20;
 
 	event PaidFee(
@@ -69,16 +70,24 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		uint _idx,
 		OrderInfo _orderInfo
 	);
+	event PaidSubcription(
+		uint256 timestamp
+	);
 
-	mapping (uint256 => ICurciferAsset.OrderInfo) private orderBook;
+	mapping (uint256 => IYCBAsset.OrderInfo) private orderBook;
 	mapping (address => BuyerInfo) private buyerHistory;
 	uint256[] orderBookIds;
 	address private assetOwner;
 	address private orderListContract;
 	address private projectOwner;
-	address private selectedFeeToken;
-	uint256 private selectedFeePrice;
+	address private selectedFeeToken; // selected for Fee Token
+	uint256 private selectedFeePrice; // selected for Fee Price
+	uint256 private subscriptionPeriod = 4 weeks; // need to subscribe 1 month to trade
+	uint256 private selectedSubcriptionFeeToken; // selected for subscription fee token
+	uint256 private selectedSubcriptionFeePrice; // selected for subccription fee price
 	uint private totalOrder = 0;
+	bool private isZeroFee = false; // zero fee or with fee switch
+	uint256 expiredSubscription;
 
 	constructor(address _owner, address _orderListContract, address _dev) {
 		assetOwner = _owner;
@@ -114,6 +123,11 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		orderInfo.isApproved = false;
 		orderInfo.isCreated = true;
 
+		if (isZeroFee) {
+			// automatically approved because zero fee
+			orderInfo.isApproved = true;
+		}
+
 		orderBook[_orderId] = orderInfo;
 		orderBookIds.push(_orderId);
 
@@ -122,6 +136,21 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		totalOrder ++;
 	}
 
+	function paySubsription(uint durationMontly) external nonReentrant {
+		uint allowance = IERC20(selectedFeeToken).allowance(assetOwner, address(this));
+		uint balance = IERC20(selectedFeeToken).balanceOf(assetOwner);
+		if (allowance <= selectedFeePrice) {
+			revert NotEnoughAllowanceToPayFee(selectedSubcriptionFeePrice);
+		}
+		if (balance <= selectedFeePrice) {
+			revert NotEnoughBalanceToPayFee(selectedSubcriptionFeePrice);
+		}
+		IERC20(selectedFeeToken).safeTransferFrom(assetOwner, projectOwner, selectedSubcriptionFeePrice * durationMontly);
+		expiredSubscription = block.timestamp + subscriptionPeriod * durationMontly;
+		emit PaidSubcription(expiredSubscription);
+	}
+
+	// when ZeroFee is not available, need to pay Fee when trading
 	function payFee(uint256 _orderId) external nonReentrant {
 		uint allowance = IERC20(selectedFeeToken).allowance(assetOwner, address(this));
 		uint balance = IERC20(selectedFeeToken).balanceOf(assetOwner);
@@ -193,11 +222,13 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 				revert NotEnoughAllowanceDesiredToken(allowance);
 			}
 
-			require(msg.value > _contractFee, "not enough to pay contract fee");
-			payable(projectOwner).transfer(_contractFee);
+			if (!isZeroFee) {
+				require(msg.value > _contractFee, "not enough to pay contract fee");
+				payable(projectOwner).transfer(_contractFee);
+			}
 
 			BuyerInfo memory _buyerInfo = buyerHistory[_customerAddress];
-			_buyerInfo.isReady = false;
+			_buyerInfo.isReady = true;
 			_buyerInfo.isWithdrawn = true;
 			_buyerInfo.lastInteractionOrderId = _orderId;
 			_buyerInfo.soldQuantity = _soldQuantity;
@@ -212,12 +243,7 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 			IERC20(_orderInfo.providerTokenAddress).safeTransferFrom(address(this), _customerAddress, _soldQuantity);
 			
 		} else {
-			BuyerInfo memory _buyerInfo = buyerHistory[_customerAddress];
-			_buyerInfo.isReady = false;
-			_buyerInfo.isWithdrawn = false;
-			_buyerInfo.lastInteractionOrderId = _orderId;
-			_buyerInfo.soldQuantity = _soldQuantity;
-			// TO DO: check admin
+			revert onlyForSameChainWithdraw();
 		}
 	}
 
@@ -239,10 +265,6 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		IERC20(_orderInfo.providerTokenAddress).safeTransferFrom(address(this), msg.sender, receivedQuantity);
 	}
 
-	function customerWithdrawOnChain() external nonReentrant {
-		// TO DO: for withdraw customer with same chain network
-	}
-
 	function cancelOrder(uint orderId) external nonReentrant onlyAssetOwner {
 		if (!orderBook[orderId].isCreated) {
 			revert OrderNotCreatedYet();
@@ -253,6 +275,14 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		}
 		delete orderBook[orderId];
 		totalOrder --;
+	}
+
+	function getStatusSubscription() external view returns (bool) {
+		return block.timestamp > expiredSubscription;
+	}
+
+	function setFeeSwitch(bool flag) external nonReentrant onlyForMainContract {
+		isZeroFee = flag;
 	}
 
 	function approveTransactionByAdmin(address _customerAddress) external nonReentrant onlyForMainContract {
