@@ -3,9 +3,8 @@
 
 pragma solidity ^0.8.12;
 
-import "./CurciferAsset.sol";
+import "./YCBAsset.sol";
 import "./utils/SafeERC20.sol";
-import "./utils/Ownable.sol";
 import "./YCBTradeList.sol";
 
 error UnknownAssetOwner();
@@ -14,7 +13,7 @@ error noSubscriptionExpired();
 error NotEnoughAllowanceToPaySubcriptionFee(uint requiredAllowance);
 error NotEnoughBalanceToPaySubscriptionFee(uint balance);
 
-contract YCBPairListContent is Ownable, YCBPairListContentInterface {
+contract YCBPairListContent is IYCBPairListContent {
 	using SafeERC20 for IERC20;
 
 	event AssetOwnerError(
@@ -41,11 +40,13 @@ contract YCBPairListContent is Ownable, YCBPairListContentInterface {
 	uint256 private contractFee = 0.01 ether;
 
 	TradePair contentIdentity;
+	address owner;
 
-	constructor(string memory _pairName, address _pairA, address _pairB) {
+	constructor(string memory _pairName, address _pairA, address _pairB, address _owner) {
 		contentIdentity.pairName = _pairName;
 		contentIdentity.exchangePairToken = _pairA;
 		contentIdentity.targetPairToken = _pairB;
+		owner = _owner;
 	}
 
     function getPairName() external view returns (string memory) {
@@ -66,7 +67,7 @@ contract YCBPairListContent is Ownable, YCBPairListContentInterface {
 	{
 		createNewAsset();
 
-		ICurciferAsset asset = ICurciferAsset(assetList[msg.sender]);
+		IYCBAsset asset = IYCBAsset(assetList[msg.sender]);
 
 		address _feeToken = feeTokenList[_indexSelectionFee];
 		uint256 _feePrice = feePriceList[_indexSelectionFee];
@@ -95,7 +96,7 @@ contract YCBPairListContent is Ownable, YCBPairListContentInterface {
 		
 		address selectedAsset = assetList[msg.sender];
 		if (selectedAsset == address(0)) {
-			address _selectedAsset = address(new CurciferAsset(msg.sender, address(this), _owner));
+			address _selectedAsset = address(new YCBAsset(msg.sender, address(this), owner));
 			assetList[msg.sender] = _selectedAsset;
 			providerList.push(msg.sender);
 		}
@@ -113,7 +114,7 @@ contract YCBPairListContent is Ownable, YCBPairListContentInterface {
 			emit AssetOwnerError(1);
 			revert UnknownAssetOwner();
 		}
-		ICurciferAsset(selectedAsset).customerTrading(_orderId, _soldQuantity, _receivedQuantity, contractFee, msg.sender);
+		IYCBAsset(selectedAsset).customerTrading(_orderId, _soldQuantity, _receivedQuantity, contractFee, msg.sender);
 	}
 
 	function securitySubcriptionCheck() external view returns (bool) {
@@ -142,7 +143,7 @@ contract YCBPairListContent is Ownable, YCBPairListContentInterface {
 		if (balance <= selectedSubcriptionFeePrice) {
 			revert NotEnoughBalanceToPaySubscriptionFee(selectedSubcriptionFeePrice);
 		}
-		IERC20(selectedFeeToken).safeTransferFrom(msg.sender, _owner, selectedSubcriptionFeePrice * durationMontly);
+		IERC20(selectedFeeToken).safeTransferFrom(msg.sender, owner, selectedSubcriptionFeePrice * durationMontly);
 		exchangeAccountExpirationList[msg.sender] = block.timestamp + subscriptionPeriod * durationMontly;
 		emit PaidSubcription(exchangeAccountExpirationList[msg.sender]);
 	}
@@ -163,5 +164,10 @@ contract YCBPairListContent is Ownable, YCBPairListContentInterface {
 	function createOrderId() private returns (uint256) {
 		nonce ++;
 		return uint256(keccak256(abi.encode(msg.sender, block.timestamp, nonce)));
+	}
+
+	modifier onlyOwner() {
+		require((owner == msg.sender), "Ownable: Caller is not the Owner");
+		_;
 	}
 }

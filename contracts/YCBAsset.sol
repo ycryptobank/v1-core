@@ -19,7 +19,7 @@ error withdrawnAssetAlreadySent();
 error assetNotReadyToBeWithdrawn();
 error onlyForSameChainWithdraw();
 
-interface ICurciferAsset {
+interface IYCBAsset {
 	error NotEnoughAllowanceDesiredToken(uint requiredAllowance);
 	error NotEnoughAllowanceProviderToken(uint requiredAllowance);
 	error NotEnoughBalanceProviderToken(uint balance);
@@ -60,7 +60,7 @@ interface ICurciferAsset {
 	function customerTrading(uint _orderId, uint _soldQuantity, uint _receivedQuantity, uint _contractFee, address _customerAddress) external payable;
 }
 
-contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
+contract YCBAsset is ReentrancyGuard, IYCBAsset {
 	using SafeERC20 for IERC20;
 
 	event PaidFee(
@@ -74,7 +74,7 @@ contract CurciferAsset is ReentrancyGuard, ICurciferAsset {
 		uint256 timestamp
 	);
 
-	mapping (uint256 => ICurciferAsset.OrderInfo) private orderBook;
+	mapping (uint256 => IYCBAsset.OrderInfo) private orderBook;
 	mapping (address => BuyerInfo) private buyerHistory;
 	uint256[] orderBookIds;
 	address private assetOwner;

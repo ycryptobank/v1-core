@@ -26,7 +26,7 @@ describe("Test Curcifer Order", () => {
 		await tokenD.deployed();
 		await tokenE.deployed();
 
-		const _providerAsset = await ethers.getContractFactory('CurciferAsset');
+		const _providerAsset = await ethers.getContractFactory('YCBAsset');
 		providerAsset = await _providerAsset.connect(providerAddr).deploy(providerAddr.address, orderListContractAddr.address, deployer.address);
 		await providerAsset.deployed();
 
