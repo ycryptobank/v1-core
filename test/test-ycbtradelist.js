@@ -27,8 +27,12 @@ describe("Test TradeList Contract", () => {
 		await tokenE.deployed();
 
 		const _ycbTradeList = await ethers.getContractFactory('YCBTradeList');
-		tradeList = await _ycbTradeList.connect(providerAddr).deploy();
+		tradeList = await _ycbTradeList.connect(deployer).deploy();
 		await tradeList.deployed();
+
+	})
+
+	describe("Test New Order Creation", async () => {
 
 	})
 })

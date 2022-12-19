@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 
-pragma solidity ^0.8.12;
-
+pragma solidity ^0.8.17;
 import "./utils/SafeERC20.sol";
 import "./utils/Ownable.sol";
 import "./utils/ReentrancyGuard.sol";

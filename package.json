@@ -19,6 +19,7 @@
     "hardhat": "^2.8.4"
   },
   "dependencies": {
+    "@ethersproject/pbkdf2": "^5.7.0",
     "@ethersproject/providers": "^5.7.1"
   }
 }
