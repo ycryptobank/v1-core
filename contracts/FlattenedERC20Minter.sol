@@ -1593,6 +1593,10 @@ contract ERC20PresetMinterPauser is Context, AccessControlEnumerable, ERC20Burna
     }
 }
 
-contract CTT is ERC20PresetMinterPauser {
-	constructor() ERC20PresetMinterPauser("Curcifer Test Token", "CTT") {}
+contract TYIELD is ERC20PresetMinterPauser {
+	constructor() ERC20PresetMinterPauser("Test Yield Token", "TokenYield") {}
+}
+
+contract TBONUS is ERC20PresetMinterPauser {
+	constructor() ERC20PresetMinterPauser("Test Bonus Token", "TokenBonus") {}
 }

@@ -6,20 +6,25 @@ pragma solidity ^0.8.17;
  * all writeable should be only owner and centralized
  */
 interface IYCBYieldFactory {
-    function getActiveYields() external view returns (address[] memory yields);
+    function createYieldCampaign(
+        address _tokenYield,
+        address _tokenBonus,
+        uint _yieldRate, 
+        uint _depositRate,
+        uint _frozenPeriods
+    ) external;
+    function getActiveYields() external view returns (address[] memory _yields);
+    function getInActiveYields() external view returns (address[] memory _yields);
     function startYield(
-        address yieldPath
+        address _yieldPath
+    ) external;
+    function completeYield(
+        address _yieldPath,
+        uint _amount
     ) external;
     function distributeYield(
-        address yieldPath,
-        address token,
-        uint amount
-    ) external view returns (uint amountLeft);
-    function createYield(
-        address token,
-        uint maxAmount
+        address _yieldPath,
+        uint _amount,
+        uint _tokenDecimals
     ) external;
-    function checkProgressYield(
-        address yieldPath
-    ) external view returns (uint progress);
 }

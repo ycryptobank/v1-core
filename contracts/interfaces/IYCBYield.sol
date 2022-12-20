@@ -14,6 +14,8 @@ interface IYCBYield {
     function withdrawFunds() external;
     function yieldCompleted() external;
     function yieldStarting() external;
+    function getTokenYield() external view returns (address _tokenYield);
+    function getTokenBonus() external view returns (address _tokenBonus);
     function emergencyTransfer(
         address _userPath,
         address _token,

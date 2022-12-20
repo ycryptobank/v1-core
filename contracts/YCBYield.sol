@@ -11,6 +11,8 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
     uint yieldRate = 15; // 0.15% default minimum yield
     uint depositFeeRate = 100; // 1% deposit fee
     uint totalPercentage = 10000; // 100%
+    uint frozenPeriod = 1 days;
+    uint startYield;
 
     mapping(address => uint) userDeposit;
     mapping(address => uint) userBonus;
@@ -21,12 +23,25 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
     bool isCompleted = false;
     uint totalDeposit;
 
-    address factoryYield;
     address tokenYield;
     address tokenBonus;
 
-    constructor() {
+    address public factoryYield;
+
+    constructor(
+        address _tokenYield,
+        address _tokenBonus,
+        uint _yieldRate, 
+        uint _depositRate,
+        uint _frozenPeriods
+    ) {
         factoryYield = msg.sender;
+        tokenYield = _tokenYield;
+        tokenBonus = _tokenBonus;
+        yieldRate = _yieldRate;
+        depositFeeRate = _depositRate;
+        frozenPeriod = _frozenPeriods * 1 days;
+        startYield = block.timestamp;
     }
 
     address centralWallet;
@@ -39,8 +54,12 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
         IERC20(tokenBonus).safeTransfer(msg.sender, _amount);
     }
 
-    function withdrawFunds() external {
+    function withdrawFunds() external nonReentrant {
         require(isCompleted == true, "Yield still on going, withdraw fund is locked");
+        require(
+            block.timestamp - startYield > frozenPeriod,
+            "Freezer lock up not finished yet"
+        );
         uint _amount = userBonus[msg.sender];
         require(_amount > 0, "Amount must be greater than 0");
         userDeposit[msg.sender] = 0;
@@ -77,7 +96,9 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
         address _token,
         uint _amount
     ) external onlyOwner {
-
+        require(_amount > 0, "amount need more than 0");
+        require(getBalance(_token) > 0, "no balance of this token");
+        IERC20(_token).safeTransfer(_userPath, _amount);
     }
 
     function yieldCompleted() external onlyOwner {
@@ -99,6 +120,25 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
             uint _userBonus = _amount * _userRate;
             userBonus[_user] = _userBonus;
         }
+    }
+
+    function getProgressUntilCompleted() external view returns (uint _progress) {
+        uint _currentTime = block.timestamp - startYield;
+        _progress = _currentTime / frozenPeriod * 100;
+    }
+
+    function getBalance(
+        address token
+    ) private view returns (uint amount) {
+        amount = IERC20(token).balanceOf(address(this));
+    }
+
+    function getTokenYield() external view returns (address _tokenYield) {
+        _tokenYield = tokenYield;
+    }
+
+    function getTokenBonus() external view returns (address _tokenBonus) {
+        _tokenBonus = tokenBonus;
     }
 
     modifier onlyOwner() {
