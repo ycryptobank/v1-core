@@ -27,10 +27,10 @@ contract YCBYieldFactory is IYCBYieldFactory, ReentrancyGuard {
         uint256 _yieldRate,
         uint256 _depositRate,
         uint256 _frozenPeriods
-    ) external {
-        campaignId += 1;
+    ) external onlyOwner {
         address _yield = address(
             new YCBYield(
+                owner,
                 _tokenYield,
                 _tokenBonus,
                 _yieldRate,
@@ -40,22 +40,7 @@ contract YCBYieldFactory is IYCBYieldFactory, ReentrancyGuard {
         );
         yieldList[campaignId] = _yield;
         activeYield.push(_yield);
-    }
-
-    function getActiveYields()
-        external
-        view
-        returns (address[] memory _yields)
-    {
-        _yields = activeYield;
-    }
-
-    function getInActiveYields()
-        external
-        view
-        returns (address[] memory _yields)
-    {
-        _yields = inactiveYield;
+        campaignId += 1;
     }
 
     function startYield(address _yieldPath) external onlyOwner {
@@ -76,6 +61,22 @@ contract YCBYieldFactory is IYCBYieldFactory, ReentrancyGuard {
         _yield.yieldCompleted();
         inactiveYield.push(_yieldPath);
         removeActiveYield(_yieldPath);
+    }
+
+    function getActiveYields()
+        external
+        view
+        returns (address[] memory _yields)
+    {
+        _yields = activeYield;
+    }
+
+    function getInActiveYields()
+        external
+        view
+        returns (address[] memory _yields)
+    {
+        _yields = inactiveYield;
     }
 
     function distributeYield(

@@ -6,7 +6,7 @@ import "./utils/SafeERC20.sol";
 import "./utils/ReentrancyGuard.sol";
 
 contract YCBYield is IYCBYield, ReentrancyGuard {
-    using SafeERC20 for IERC20; 
+    using SafeERC20 for IERC20;
 
     uint yieldRate = 15; // 0.15% default minimum yield
     uint depositFeeRate = 100; // 1% deposit fee
@@ -27,8 +27,10 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
     address tokenBonus;
 
     address public factoryYield;
+    address centralWallet;
 
     constructor(
+        address _centralWallet,
         address _tokenYield,
         address _tokenBonus,
         uint _yieldRate, 
@@ -42,9 +44,8 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
         depositFeeRate = _depositRate;
         frozenPeriod = _frozenPeriods * 1 days;
         startYield = block.timestamp;
+        centralWallet = _centralWallet;
     }
-
-    address centralWallet;
      
     function withdrawBonus() external nonReentrant {
         require(isStarted == true, "the yield not started yet");
@@ -122,9 +123,20 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
         }
     }
 
-    function getProgressUntilCompleted() external view returns (uint _progress) {
-        uint _currentTime = block.timestamp - startYield;
-        _progress = _currentTime / frozenPeriod * 100;
+    function getUserDeposit() external view returns (uint _amount) {
+        _amount = userDeposit[msg.sender];
+    }
+
+    function getUserBonus() external view returns (uint _amount) {
+        _amount = userBonus[msg.sender];
+    }
+
+    function getCurrentYieldTime() external view returns (
+        uint256 _currentYieldTime,
+        uint256 _frozenPeriod
+    ) {
+        _currentYieldTime = block.timestamp - startYield;
+        _frozenPeriod = frozenPeriod;
     }
 
     function getBalance(
