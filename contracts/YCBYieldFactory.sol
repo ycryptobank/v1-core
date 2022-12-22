@@ -82,10 +82,10 @@ contract YCBYieldFactory is IYCBYieldFactory, ReentrancyGuard {
     function distributeYield(
         address _yieldPath,
         uint256 _amount,
-        uint256 _tokenDecimals
+        uint[] memory _amountList
     ) external onlyOwner nonReentrant {
         IYCBYield _yield = IYCBYield(_yieldPath);
-        _yield.distributeBonusYield(_amount, _tokenDecimals);
+        _yield.distributeBonusYield(_amountList);
         IERC20(_yield.getTokenBonus()).safeTransferFrom(
             msg.sender,
             _yieldPath,

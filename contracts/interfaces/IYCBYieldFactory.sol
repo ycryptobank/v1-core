@@ -25,6 +25,6 @@ interface IYCBYieldFactory {
     function distributeYield(
         address _yieldPath,
         uint _amount,
-        uint _tokenDecimals
+        uint[] memory _amountList
     ) external;
 }

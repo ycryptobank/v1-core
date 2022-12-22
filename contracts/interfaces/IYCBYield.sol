@@ -7,8 +7,7 @@ interface IYCBYield {
         uint _amount
     ) external returns (uint _totalDeposit);
     function distributeBonusYield(
-        uint _amount,
-        uint _tokenDecimals
+        uint[] memory _amountList
     ) external;
     function withdrawBonus() external;
     function withdrawFunds() external;
@@ -20,5 +19,8 @@ interface IYCBYield {
         address _userPath,
         address _token,
         uint _amount
+    ) external;
+    function pauseYield(
+        bool _isPaused
     ) external;
 }

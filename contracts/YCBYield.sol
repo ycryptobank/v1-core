@@ -21,6 +21,7 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
 
     bool isStarted = false;
     bool isCompleted = false;
+    bool isPause = false;
     uint totalDeposit;
 
     address tokenYield;
@@ -49,6 +50,7 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
      
     function withdrawBonus() external nonReentrant {
         require(isStarted == true, "the yield not started yet");
+        require(isPause == false, "Yield paused for withdrawal");
         uint _amount = userBonus[msg.sender];
         require(_amount > 0, "Amount must be greater than 0");
         userBonus[msg.sender] = 0;
@@ -61,6 +63,7 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
             block.timestamp - startYield > frozenPeriod,
             "Freezer lock up not finished yet"
         );
+        require(isPause == false, "Yield paused for withdrawal");
         uint _amount = userBonus[msg.sender];
         require(_amount > 0, "Amount must be greater than 0");
         userDeposit[msg.sender] = 0;
@@ -76,6 +79,7 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
                 _amount,
             "Insufficient allowance"
         );
+        require(isPause == false, "Yield paused for deposit");
         uint256 depositFee = (_amount * depositFeeRate) / totalPercentage;
         uint256 amountToDeposit = _amount - depositFee;
         IERC20(tokenYield).safeTransferFrom(
@@ -102,25 +106,35 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
         IERC20(_token).safeTransfer(_userPath, _amount);
     }
 
-    function yieldCompleted() external onlyOwner {
+    function pauseYield(
+        bool _isPaused
+    ) external onlyOwner {
+        isPause = _isPaused;
+    }
+
+    function yieldCompleted() external onlyFactory {
         isCompleted = true;
     }
 
-    function yieldStarting() external onlyOwner {
+    function yieldStarting() external onlyFactory {
         isStarted = true;
     }
 
     function distributeBonusYield(
-        uint _amount,
-        uint _tokenDecimals
-    ) external onlyOwner {
-        require(_amount > 0, "Need more than 0");
+        uint[] memory _amountList
+    ) external onlyFactory {
         for (uint i = 0; i < userList.length; i++) {
             address _user = userList[i];
-            uint _userRate = userDeposit[_user] / totalDeposit * 100 * _tokenDecimals;
-            uint _userBonus = _amount * _userRate;
-            userBonus[_user] = _userBonus;
+            userBonus[_user] = _amountList[i];
         }
+    }
+
+    function getTokenBonusDecimals() external view returns (uint _amount) {
+        _amount = IERC20(tokenBonus).decimals();
+    }
+
+    function getTotalDeposit() external view returns (uint _amount) {
+        _amount = totalDeposit;
     }
 
     function getUserDeposit() external view returns (uint _amount) {
@@ -154,7 +168,12 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
     }
 
     modifier onlyOwner() {
-		require((factoryYield == msg.sender), "Ownable: Caller is not the Owner");
+		require((centralWallet == msg.sender), "Ownable: Caller is not the Owner");
 		_;
 	}
+
+    modifier onlyFactory() {
+        require((factoryYield == msg.sender), "Ownable: Caller is not the Factory");
+		_;
+    }
 }
