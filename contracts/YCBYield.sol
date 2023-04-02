@@ -72,7 +72,7 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
     
     function depositYield(
         uint _amount
-    ) external returns (uint _totalDeposit) {
+    ) external nonReentrant returns (uint _totalDeposit) {
         require(_amount > 0, "Amount must be greater than 0");
         require(
             IERC20(tokenYield).allowance(msg.sender, address(this)) >=
@@ -80,6 +80,7 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
             "Insufficient allowance"
         );
         require(isPause == false, "Yield paused for deposit");
+        require(isStarted == false, "Yield is already started");
         uint256 depositFee = (_amount * depositFeeRate) / totalPercentage;
         uint256 amountToDeposit = _amount - depositFee;
         IERC20(tokenYield).safeTransferFrom(
@@ -94,6 +95,14 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
         userDeposit[msg.sender] = amountToDeposit;
         totalDeposit += amountToDeposit;
         _totalDeposit = amountToDeposit;
+    }
+
+    function emergencyWithdrawDeposit() external nonReentrant {
+        uint _amount = userDeposit[msg.sender];
+        require(isStarted == false, "Yield is already started");
+        require(getBalance(tokenYield) > 0, "No balance Yield");
+        IERC20(tokenYield).safeTransfer(msg.sender, _amount);
+        userDeposit[msg.sender] = 0;
     }
     
     function emergencyTransfer(
@@ -112,17 +121,17 @@ contract YCBYield is IYCBYield, ReentrancyGuard {
         isPause = _isPaused;
     }
 
-    function yieldCompleted() external onlyFactory {
+    function yieldCompleted() external nonReentrant onlyFactory {
         isCompleted = true;
     }
 
-    function yieldStarting() external onlyFactory {
+    function yieldStarting() external nonReentrant onlyFactory {
         isStarted = true;
     }
 
     function distributeBonusYield(
         uint[] memory _amountList
-    ) external onlyFactory {
+    ) external nonReentrant onlyFactory {
         for (uint i = 0; i < userList.length; i++) {
             address _user = userList[i];
             userBonus[_user] = _amountList[i];
