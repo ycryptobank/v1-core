@@ -1,4 +1,4 @@
-const { expect } = require('chai');
+const { expect, util } = require('chai');
 const { ethers } = require('hardhat');
 
 describe("Test Passport", () => {
@@ -15,7 +15,7 @@ describe("Test Passport", () => {
         passportPool = await _passportPool.connect(poolOwner).deploy();
         
         const _passport = await ethers.getContractFactory('YCBPassport');
-        passport = await _passport.connect(customerAccount).deploy(poolOwner.address, ethers.constants.AddressZero);
+        passport = await _passport.connect(customerAccount).deploy(passportPool.address, ethers.constants.AddressZero);
     })
 
     describe('Test YCB Passport Create', async () => {
@@ -26,13 +26,19 @@ describe("Test Passport", () => {
 
         it('Create passport isValid should be false', async () => {
             const _isValid = await passport.isValid();
-            expect(_isValid).false;
+            expect(_isValid).to.equal(false);
         })
 
-        it('Create passport validate method should be not able to be called', async () => {
+        it('Create passport validate should reflect isValid true', async () => {
+            const _isValid = await passport.isValid();
+            expect(_isValid).to.equal(false);
+
             await expect(
-                passport.validate(ethers.utils.parseEther("49"))
-            ).to.be.revertedWith('Only the passport pool owner can call this function')
+                passport.validate(ethers.utils.parseEther("49"), { value: ethers.utils.parseEther("50") })
+            ).to.not.be.reverted;
+
+            const _isValidAfter = await passport.isValid();
+            expect(_isValidAfter).to.equal(true);
         })
     })
 
@@ -59,7 +65,6 @@ describe("Test Passport", () => {
     describe('Test YCB Passport migration', async () => {
         it('YCBPassport migrate to new contract should migrate the data', async () => {
             const _passport = await ethers.getContractFactory('YCBPassport', customerAccount);
-            // user need to create new migrated contract first and call migrate to new contract, don't forget to input last passport address
             const newPassport = await _passport.deploy(poolOwner.address, passport.address);
             await newPassport.deployed();
 
@@ -79,13 +84,90 @@ describe("Test Passport", () => {
 
 describe("Test YCB Passport Pool", () => {
 
-    let yieldOwner
+    let poolOwner
     let customerAccount
-    let flexibleYield
+    let passportPool
+    let passport
 
     beforeEach(async () => {
-        [ yieldOwner, customerAccount ] = await ethers.getSigners();
-        const _flexibleYield = await ethers.getContractFactory('YCBYieldFlexible');
-        flexibleYield = await _flexibleYield(yieldOwner).deploy();
+        [ poolOwner, customerAccount ] = await ethers.getSigners();
+        const _passportPool = await ethers.getContractFactory('YCBPassportPool');
+        passportPool = await _passportPool.connect(poolOwner).deploy();
+        
+        const _passport = await ethers.getContractFactory('YCBPassport');
+        passport = await _passport.connect(customerAccount).deploy(passportPool.address, ethers.constants.AddressZero);
+    })
+
+    describe('Test YCB Passport Pool methods', async () => {
+
+        it('YCBPassport Pool set price', async () => {
+            const _price = await passportPool.validationPrice();
+            console.log(`price: ${ethers.utils.formatEther(_price).toString()}`);
+            expect(ethers.utils.formatEther(_price).toString()).to.equal("49.0");
+            
+            await passportPool.connect(poolOwner).setValidationPrice(ethers.utils.parseEther("1.0"));
+            const _updatedPrice = await passportPool.validationPrice();
+            expect(ethers.utils.formatEther(_updatedPrice).toString()).to.equal("1.0");
+        })
+
+        it('YCBPassport Pool getValidatedMember status should reflect correctly', async () => {
+            const _isValid = await passportPool.getValidatedMember(passport.address);
+            expect(_isValid).false;
+            await expect(
+                passport.validate(ethers.utils.parseEther("49"), { value: ethers.utils.parseEther("50") })
+            ).to.not.be.reverted;
+            const _isValidAfter = await passportPool.getValidatedMember(passport.address);
+            expect(_isValidAfter).true;
+        })
+
+        it('YCBPassport Pool revalidate should copy date correctly', async () => {
+            const _date = await passportPool.getValidatedMemberDate(passport.address);
+            expect(_date).to.equal(0);
+
+            await expect(
+                passport.validate(ethers.utils.parseEther("49"), { value: ethers.utils.parseEther("50") })
+            ).to.not.be.reverted;
+
+            const _dateAfter = await passportPool.getValidatedMemberDate(passport.address);
+            console.log(`dateAfter: ${_dateAfter.toString()}`);
+            expect(parseInt(_dateAfter)).to.greaterThanOrEqual(0);
+
+            const _passport = await ethers.getContractFactory('YCBPassport', customerAccount);
+            const newPassport = await _passport.deploy(poolOwner.address, passport.address);
+            await newPassport.deployed();
+
+            const _dateNew = await passportPool.getValidatedMemberDate(newPassport.address);
+            expect(_dateNew).to.equal(0);
+
+            await passportPool.connect(poolOwner).revalidate(newPassport.address, passport.address);
+
+            const _dateNewAfter = await passportPool.getValidatedMemberDate(newPassport.address);
+            expect(parseInt(_dateNewAfter)).to.greaterThanOrEqual(0);
+        })
+
+        it('YCBPassport Pool should allow owner to withdraw', async () => {
+
+            const balance = await ethers.provider.getBalance(passportPool.address);
+            console.log(`Balance: ${balance.toString()}`);
+            expect(balance).to.equal("0");
+
+            await expect(
+                passport.validate(ethers.utils.parseEther("49"), { value: ethers.utils.parseEther("49.1") })
+            ).to.not.be.reverted;
+
+            const balanceOwner = await ethers.provider.getBalance(poolOwner.address);
+            console.log(`BalanceOwner: ${ethers.utils.formatEther(balanceOwner).toString()}`);
+
+            const balance2 = await ethers.provider.getBalance(passportPool.address);
+            console.log(`Balance: ${balance2.toString()}`);
+            expect(ethers.utils.formatEther(balance2).toString()).to.equal("49.1");
+
+            await passportPool.connect(poolOwner).withdraw(poolOwner.address, ethers.utils.parseEther("1.0"))
+
+            const balanceOwner2 = await ethers.provider.getBalance(poolOwner.address);
+            console.log(`BalanceOwner2: ${ethers.utils.formatEther(balanceOwner2).toString()}`);
+            expect(parseInt(ethers.utils.formatEther(balanceOwner2).toString())).to.greaterThanOrEqual(10000000);
+            
+        })
     })
 })

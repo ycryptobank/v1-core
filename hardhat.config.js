@@ -27,5 +27,12 @@ module.exports = {
         runs: 200
       }
     }
+  },
+  networks: {
+    hardhat: {
+      accounts: {
+        accountsBalance: "10000000000000000000000000"
+      }
+    }
   }
 };

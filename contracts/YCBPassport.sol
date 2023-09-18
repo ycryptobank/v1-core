@@ -4,13 +4,13 @@ pragma solidity ^0.8.12;
 
 import "./utils/ReentrancyGuard.sol";
 import "./interfaces/IYCBPassport.sol";
+import "./interfaces/IYCBPassportPoolV1.sol";
 
 contract YCBPassport is IYCBPassport, ReentrancyGuard {
     mapping(string => string) private addresses;
     string[] private chains;
     address private owner;
-    address private passportPoolOwner;
-    uint256 private expirationDate;
+    address private passportPool;
     address lastPassport;
 
     modifier onlyOwner() {
@@ -18,15 +18,9 @@ contract YCBPassport is IYCBPassport, ReentrancyGuard {
         _;
     }
 
-    modifier onlyPassportPoolOwner() {
-        require(msg.sender == passportPoolOwner, "Only the passport pool owner can call this function");
-        _;
-    }
-
-    constructor(address _passportPoolOwner, address _lastPassport) {
+    constructor(address _passportPool, address _lastPassport) {
         owner = msg.sender;
-        passportPoolOwner = _passportPoolOwner;
-        expirationDate = 0;
+        passportPool = _passportPool;
         lastPassport = _lastPassport;
     }
 
@@ -43,14 +37,16 @@ contract YCBPassport is IYCBPassport, ReentrancyGuard {
         chains.push(chain);
     }
 
-    function isValid() external view override returns (bool) {
-        return block.timestamp < expirationDate;
+    function validate(uint256 price) external payable  override onlyOwner nonReentrant {
+        require(msg.value > price, "Insufficient validation fee");
+        
+        IYCBPassportPoolV1 pool = IYCBPassportPoolV1(payable(passportPool));
+        pool.validate{value: msg.value}();
     }
 
-    function validate(uint256 price) external payable override onlyPassportPoolOwner {
-        require(msg.value >= price, "Insufficient validation fee");
-        payable(passportPoolOwner).transfer(msg.value);
-        expirationDate = block.timestamp + 365 days;
+    function isValid() external view override returns (bool) {
+        IYCBPassportPoolV1 pool = IYCBPassportPoolV1(passportPool);
+        return pool.isValid();
     }
 
     function migrate(IYCBPassport newPassport) external override onlyOwner {
@@ -61,6 +57,7 @@ contract YCBPassport is IYCBPassport, ReentrancyGuard {
             string memory addr = addresses[chain];
             newPassport.setAddresses(chain, addr);
         }
+
     }
 }
 
