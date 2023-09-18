@@ -1,104 +1,70 @@
 // SPDX-License-Identifier: apgl-3.0
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.12;
 
-import "./YCBYieldFlexible.sol";
 import "./utils/ReentrancyGuard.sol";
-
-interface IYCBPassport {
-    function paySubscription() external;
-    function getRemainingCredits() external view returns (uint);
-    function joinYield() external;
-}
+import "./interfaces/IYCBPassport.sol";
 
 contract YCBPassport is IYCBPassport, ReentrancyGuard {
+    mapping(string => string) private addresses;
+    string[] private chains;
+    address private owner;
+    address private passportPoolOwner;
+    uint256 private expirationDate;
+    address lastPassport;
 
-    bool isActive;
-    address poolOwner;
-    uint credits;
-    uint expiration;
-
-    address[] public activeYieldList;
-
-    address passportOwner;
-
-    constructor(
-        address _passportOwner
-    ) {
-        poolOwner = msg.sender;
-        isActive = false;
-        credits = 0;
-        passportOwner = _passportOwner;
+    modifier onlyOwner() {
+        require(msg.sender == owner || msg.sender == lastPassport, "Only the owner can call this function");
+        _;
     }
 
-    function joinYield() external nonReentrant onlyPoolOwner checkExpiration {
-        activeYieldList.push(msg.sender);
+    modifier onlyPassportPoolOwner() {
+        require(msg.sender == passportPoolOwner, "Only the passport pool owner can call this function");
+        _;
     }
-    
-    function paySubscription() external nonReentrant checkExpiration {
-        if (isActive) {
-            credits += 4 weeks;
-        } else {
-            credits += block.timestamp + 4 weeks;
+
+    constructor(address _passportPoolOwner, address _lastPassport) {
+        owner = msg.sender;
+        passportPoolOwner = _passportPoolOwner;
+        expirationDate = 0;
+        lastPassport = _lastPassport;
+    }
+
+    function listAddress() external view override returns (string[] memory) {
+        return chains;
+    }
+
+    function getAddresses(string memory chain) external view override returns (string memory) {
+        return addresses[chain];
+    }
+
+    function setAddresses(string memory chain, string memory walletAddress) external override onlyOwner {
+        addresses[chain] = walletAddress;
+        chains.push(chain);
+    }
+
+    function isValid() external view override returns (bool) {
+        return block.timestamp < expirationDate;
+    }
+
+    function validate(uint256 price) external payable override onlyPassportPoolOwner {
+        require(msg.value >= price, "Insufficient validation fee");
+        payable(passportPoolOwner).transfer(msg.value);
+        expirationDate = block.timestamp + 365 days;
+    }
+
+    function migrate(IYCBPassport newPassport) external override onlyOwner {
+        require(address(newPassport) != address(0), "Invalid new passport address");
+        
+        for (uint i = 0; i < chains.length; i++) {
+            string memory chain = chains[i];
+            string memory addr = addresses[chain];
+            newPassport.setAddresses(chain, addr);
         }
-        isActive = true;
-    }
-
-    function getRemainingCredits() external view returns (uint) {
-        return credits;
-    }
-
-    modifier onlyPoolOwner() {
-        require((poolOwner == msg.sender), "Caller is not Pool Owner");
-        _;
-    }
-
-    modifier onlyPassportOwner() {
-        require((passportOwner == msg.sender), "Caller is not the Passport Owner");
-        _;
-    }
-
-    modifier checkExpiration() {
-        bool _checkExpiration = credits > block.timestamp;
-        isActive = _checkExpiration;
-        require((_checkExpiration), "Error: Need Renew Passport");
-        _;
     }
 }
 
-contract YCBPassportPool is ReentrancyGuard {
-
-    address owner;
-
-    mapping ( address => address ) passportList;
-
-    constructor() {
-        owner = msg.sender;
-    }
-
-    function createPassport() external {
-        address _newPassport = address(new YCBPassport(msg.sender));
-        passportList[msg.sender] = _newPassport;
-    }
-
-    function activatePassport() external {
-        IYCBPassport _passport = IYCBPassport(passportList[msg.sender]);
-        _passport.paySubscription();
-        passportList[msg.sender] = address(_passport);
-    }
-
-    function getMyPassport() external view returns (IYCBPassport) {
-        IYCBPassport _passport = IYCBPassport(passportList[msg.sender]);
-        return _passport;
-    }
-
-    function joinYield(address yieldFlexible) external nonReentrant {
-        IYCBYieldActivation _yieldFlexible = IYCBYieldActivation(yieldFlexible);
-        _yieldFlexible.activate(passportList[msg.sender]);
-    }
-
-    modifier onlyPoolOwner() {
-        require((owner == msg.sender), "Caller is not the pool Owner");
-        _;
-    }
+interface IERC20 {
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256);
 }

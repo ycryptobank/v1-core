@@ -2,17 +2,11 @@
 
 pragma solidity ^0.8.17;
 
-import "./YCBPassport.sol";
+import "./interfaces/IYCBPassport.sol";
+import "./interfaces/IYCBFlexibleActivity.sol";
+import "./interfaces/IYCBActivationActivity.sol";
 
-interface IYCBYieldFlexible {
-    function checkDuration() external returns (bool);
-}
-
-interface IYCBYieldActivation{
-    function activate(address passport) external;
-}
-
-contract YCBYieldFlexible is IYCBYieldFlexible, IYCBYieldActivation {
+contract YCBYieldFlexible is IYCBFlexibleActivity, IYCBActivationActivity {
 
     address owner;
     address poolOwner;
@@ -21,6 +15,8 @@ contract YCBYieldFlexible is IYCBYieldFlexible, IYCBYieldActivation {
     bool isExpired;
     uint public periodYield;
     uint public totalPassports;
+
+    mapping (address => bool) activeStacker;
 
     constructor(
         string memory _name,
@@ -34,13 +30,21 @@ contract YCBYieldFlexible is IYCBYieldFlexible, IYCBYieldActivation {
         totalPassports = 0;
     }
 
-    function checkDuration() external view returns (bool) {
-        return isExpired;
+    function checkDuration() external view returns (uint) {
+        return periodYield + block.timestamp;
+    }
+
+    function checkActiveStatus() external view returns (bool) {
+        return activeStacker[msg.sender];
     }
 
     function activate(address passport) external onlyPassportPoolOwner {
-        IYCBPassport _passport = IYCBPassport(passport);
-        _passport.joinYield();
+        
+    }
+
+    function deactivate(address passport) external onlyPassportPoolOwner {
+        // put back user money to passport
+        activeStacker[passport] = false;
     }
 
     modifier onlyYieldOwner() {
@@ -53,3 +57,19 @@ contract YCBYieldFlexible is IYCBYieldFlexible, IYCBYieldActivation {
         _;
     }
 }
+
+/**
+ * 
+ * uint256 totalAllStackedCustomer = 10000;
+uint256 totalStackedSingleCustomer = 1000;
+uint256 totalSupply = 1000000;
+uint256 distributedToken = 500;
+
+uint256 percentageAllStackedCustomer = totalAllStackedCustomer * 100 / totalSupply;
+uint256 percentageStackedSingleCustomer = totalStackedSingleCustomer * 100 / totalSupply;
+
+uint256 distributedTokenForSingleCustomer = distributedToken * percentageStackedSingleCustomer / percentageAllStackedCustomer;
+
+ * 
+ * 
+ */
