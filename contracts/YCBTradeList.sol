@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: apgl-3.0
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.17;
 
 import "./utils/SafeERC20.sol";
 import "./utils/Ownable.sol";

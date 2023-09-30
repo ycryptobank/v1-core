@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.5.0) (token/ERC20/IERC20.sol)
 
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.17;
 
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -1593,6 +1593,10 @@ contract ERC20PresetMinterPauser is Context, AccessControlEnumerable, ERC20Burna
     }
 }
 
-contract CTT is ERC20PresetMinterPauser {
-	constructor() ERC20PresetMinterPauser("Curcifer Test Token", "CTT") {}
+contract TYIELD is ERC20PresetMinterPauser {
+	constructor() ERC20PresetMinterPauser("Test Yield Token", "TokenYield") {}
+}
+
+contract TBONUS is ERC20PresetMinterPauser {
+	constructor() ERC20PresetMinterPauser("Test Bonus Token", "TokenBonus") {}
 }
