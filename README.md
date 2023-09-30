@@ -1,10 +1,15 @@
 
 
-# Personal Dex 
+# YCB V1
 [![Test Contract](https://github.com/curcifer/v1-personaldex/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/curcifer/v1-personaldex/actions/workflows/main.yml)
 
-This is a personal dex create for p2p.
-The Contract act as a middleman of the transaction over blockchain.
+Contains variety of contract that will be used in the YCB Project V1 Features.
+
+## Contract that is tested and used
+- [x] YCBPassport
+- [x] YCBPassportPool
+- [x] YCBTradingYield
+- [ ] Other than above Contract (Subject to be deleted)
 
 
 To run the project make sure you install nodejs
@@ -16,9 +21,9 @@ npx hardhat test
 
 # Road Map development
 - [x] Contract Implementation
-- [ ] Testing Contract
+- [x] Testing Contract
 - [ ] Audit
 
 
 ## Disclaimer
-The repository is only for transparency in smart contract.
+Copying the contract without research will result in huge bug / even financial loss, for production please exercise caution.
